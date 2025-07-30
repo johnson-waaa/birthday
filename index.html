@@ -1,64 +1,92 @@
+<!--
+将此文件命名为 index.html，并与一个名为 "assets" 的文件夹放在同一目录下。
+assets 文件夹中请放置：
+  - fireworks.gif （烟花动画）
+  - fireworks.mp3 （烟花声）
+  - cake.png （生日蛋糕图片）
+  - happy_birthday.mp3 （生日祝福歌）
+  - healthy_back.jpg （祝爸爸腰椎健康背景图片）
+  - wealth_back.jpg （祝爸爸财源滚滚背景图片）
+-->
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>父亲生日祝福</title>
-    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
-    <style>
-        body { margin: 0; padding: 0; font-family: 'Microsoft YaHei'; }
-        .swiper-container { width: 100%; height: 100vh; }
-        .slide { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .slide1 { background: linear-gradient(to right, #ff758c, #ff7eb3); color: white; }
-        .slide2 { background: linear-gradient(to right, #4facfe, #00f2fe); color: white; }
-        .slide3 { background: linear-gradient(to right, #43e97b, #38f9d7); color: white; }
-        h1 { font-size: 2.5rem; margin-bottom: 20px; }
-        p { font-size: 1.5rem; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生日祝福</title>
+  <style>
+    body, html { margin:0; padding:0; overflow:hidden; width:100%; height:100%; }
+    .page { display:none; width:100%; height:100%; position:absolute; top:0; left:0; justify-content:center; align-items:center; flex-direction:column; background-size:cover; background-position:center; }
+    .active { display:flex; }
+    img { max-width:80%; max-height:80%; }
+    h1 { color: #fff; font-size:2rem; text-align:center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); padding: 0.5em; border-radius: 0.5em; }
+  </style>
 </head>
 <body>
-    <div class="swiper-container">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide slide slide1">
-                <h1>祝亲爱的爸爸</h1>
-                <p>生日快乐！</p>
-            </div>
-            <div class="swiper-slide slide slide2">
-                <h1>身体健康</h1>
-                <p>愿您永远健康快乐！</p>
-            </div>
-            <div class="swiper-slide slide slide3">
-                <h1>财源滚滚</h1>
-                <p>事业蒸蒸日上！</p>
-            </div>
-        </div>
-    </div>
+  <!-- 第1页：烟花 -->
+  <div id="page1" class="page active" style="background-color:black;">
+    <img src="assets/fireworks.gif" alt="烟花">
+    <audio id="audio1" src="assets/fireworks.mp3" autoplay></audio>
+  </div>
+  <!-- 第2页：蛋糕 & 生日歌 -->
+  <div id="page2" class="page" style="background-color:#f0e68c;">
+    <img src="assets/cake.png" alt="生日蛋糕">
+  </div>
+  <!-- 第3页：健康祝福 -->
+  <div id="page3" class="page" style="background-image:url('assets/healthy_back.jpg');">
+    <h1>祝爸爸腰椎健康，身轻如燕！</h1>
+  </div>
+  <!-- 第4页：财源祝福 -->
+  <div id="page4" class="page" style="background-image:url('assets/wealth_back.jpg');">
+    <h1>祝爸爸财源滚滚来！</h1>
+  </div>
 
-    <audio id="bgMusic" loop>
-        <source src="背景音乐.mp3" type="audio/mpeg">
-    </audio>
+  <!-- 全局生日歌音频 -->
+  <audio id="birthdayAudio" src="assets/happy_birthday.mp3" loop></audio>
 
-    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
-    <script>
-        var swiper = new Swiper('.swiper-container', {
-            effect: 'coverflow',
-            loop: true,
-            autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
-            }
-        });
-        
-        // 微信自动播放音乐处理
-        document.addEventListener('WeixinJSBridgeReady', function() {
-            document.getElementById('bgMusic').play();
-        }, false);
-        
-        // 触摸后播放音乐（微信限制）
-        document.body.addEventListener('touchstart', function() {
-            var music = document.getElementById('bgMusic');
-            music.play();
-        }, { once: true });
-    </script>
+  <script>
+    const pages = ['page1','page2','page3','page4'];
+    // 停留时长：第1页5s，第2、3页6s，第4页不自动跳转
+    const durations = [5000, 6000, 6000];
+    let current = 0;
+    let timer;
+
+    function showPage(index) {
+      // 切换页面显示
+      pages.forEach((id, i) => document.getElementById(id).classList.toggle('active', i===index));
+      // 音频控制
+      if (index === 0) {
+        document.getElementById('audio1').play();
+        document.getElementById('birthdayAudio').pause();
+      } else {
+        document.getElementById('audio1').pause();
+        document.getElementById('birthdayAudio').play();
+      }
+    }
+
+    function scheduleNext() {
+      if (current < durations.length) {
+        timer = setTimeout(() => {
+          current++;
+          showPage(current);
+          scheduleNext();
+        }, durations[current]);
+      }
+    }
+
+    window.onload = () => {
+      showPage(0);
+      scheduleNext();
+      // 点击返回第一页
+      document.body.addEventListener('click', () => {
+        if (current === 3) {
+          clearTimeout(timer);
+          current = 0;
+          showPage(0);
+          scheduleNext();
+        }
+      });
+    };
+  </script>
 </body>
 </html>
