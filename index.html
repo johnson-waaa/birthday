@@ -18,15 +18,19 @@ assets 文件夹中请放置：
     body, html { margin:0; padding:0; overflow:hidden; width:100%; height:100%; }
     .page { display:none; width:100%; height:100%; position:absolute; top:0; left:0; justify-content:center; align-items:center; flex-direction:column; background-size:cover; background-position:center; }
     .active { display:flex; }
+    #startOverlay { position:absolute; top:0; left:0; width:100%; height:100%; background:#000; color:#fff; display:flex; justify-content:center; align-items:center; font-size:1.5rem; cursor:pointer; z-index:10; }
     img { max-width:80%; max-height:80%; }
     h1 { color: #fff; font-size:2rem; text-align:center; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); background: rgba(0,0,0,0.3); padding: 0.5em; border-radius: 0.5em; }
   </style>
 </head>
 <body>
+  <!-- 点击开始覆盖层 -->
+  <div id="startOverlay">爸爸生日快乐（请点击屏幕） 🎉🎉🎉</div>
+
   <!-- 第1页：烟花 -->
-  <div id="page1" class="page active" style="background-color:black;">
+  <div id="page1" class="page" style="background-color:black;">
     <img src="assets/fireworks.gif" alt="烟花">
-    <audio id="audio1" src="assets/fireworks.mp3" autoplay></audio>
+    <audio id="audio1" src="assets/fireworks.mp3" loop></audio>
   </div>
   <!-- 第2页：蛋糕 & 生日歌 -->
   <div id="page2" class="page" style="background-color:#f0e68c;">
@@ -41,26 +45,26 @@ assets 文件夹中请放置：
     <h1>祝爸爸得人缘，集财源！</h1>
   </div>
 
-  <!-- 全局生日歌音频 -->
+  <!-- 生日歌音频（全局） -->
   <audio id="birthdayAudio" src="assets/happy_birthday.mp3" loop></audio>
 
   <script>
     const pages = ['page1','page2','page3','page4'];
-    // 停留时长：第1页5s，第2、3页6s，第4页不自动跳转
-    const durations = [7500, 10000, 10000];
+    const durations = [7500, 8000, 8000]; // 第1页5s，第2、3页6s，第4页不自动跳转
     let current = 0;
     let timer;
 
     function showPage(index) {
-      // 切换页面显示
-      pages.forEach((id, i) => document.getElementById(id).classList.toggle('active', i===index));
-      // 音频控制
+      pages.forEach((id, i) => document.getElementById(id).classList.toggle('active', i === index));
+      const fireAudio = document.getElementById('audio1');
+      const happyAudio = document.getElementById('birthdayAudio');
       if (index === 0) {
-        document.getElementById('audio1').play();
-        document.getElementById('birthdayAudio').pause();
+        fireAudio.currentTime = 0;
+        fireAudio.play();
+        happyAudio.pause();
       } else {
-        document.getElementById('audio1').pause();
-        document.getElementById('birthdayAudio').play();
+        fireAudio.pause();
+        if (happyAudio.paused) happyAudio.play();
       }
     }
 
@@ -74,12 +78,20 @@ assets 文件夹中请放置：
       }
     }
 
-    window.onload = () => {
+    function startSequence(e) {
+      e.stopPropagation();
+      document.getElementById('startOverlay').style.display = 'none';
+      current = 0;
       showPage(0);
       scheduleNext();
-      // 点击返回第一页
-      document.body.addEventListener('click', () => {
-        if (current === 3) {
+    }
+
+    window.onload = () => {
+      document.getElementById('startOverlay').addEventListener('click', startSequence);
+      // 点击第4页时，点击屏幕可回到第1页
+      document.body.addEventListener('click', (e) => {
+        if (current === 3 && document.getElementById('startOverlay').style.display === 'none') {
+          e.stopPropagation();
           clearTimeout(timer);
           current = 0;
           showPage(0);
